@@ -93,16 +93,6 @@ POST /v1/projects
               "host": "db.prisma.io",
               "port": 5432,
               "connectionString": "postgres://user:pass@db.prisma.io:5432/postgres?sslmode=require"
-            },
-            "pooled": {
-              "host": "pooled.db.prisma.io",
-              "port": 5432,
-              "connectionString": "postgres://user:pass@pooled.db.prisma.io:5432/postgres?sslmode=require"
-            },
-            "accelerate": {
-              "host": "accelerate.prisma-data.net",
-              "port": 443,
-              "connectionString": "prisma://accelerate.prisma-data.net/?api_key=..."
             }
           }
         }
@@ -116,10 +106,11 @@ POST /v1/projects
 }
 ```
 
-Key fields to extract:
+Key field to extract:
 
-- `data.database.connections[0].endpoints.direct.connectionString` → use as `DIRECT_URL`
-- `data.database.connections[0].endpoints.pooled.connectionString` → use as `DATABASE_URL`
+- `data.database.connections[0].endpoints.direct.connectionString` → use as `DATABASE_URL`
+
+The response also includes `pooled` and `accelerate` endpoints — ignore these for new projects. The direct connection string is all you need.
 
 If `data.database.status` is `provisioning`, poll `GET /v1/databases/{id}` until `status` is `ready`.
 
@@ -194,16 +185,6 @@ Creates a new named connection string for a database. Use for per-developer or p
         "host": "db.prisma.io",
         "port": 5432,
         "connectionString": "postgres://user:pass@db.prisma.io:5432/postgres?sslmode=require"
-      },
-      "pooled": {
-        "host": "pooled.db.prisma.io",
-        "port": 5432,
-        "connectionString": "postgres://user:pass@pooled.db.prisma.io:5432/postgres?sslmode=require"
-      },
-      "accelerate": {
-        "host": "accelerate.prisma-data.net",
-        "port": 443,
-        "connectionString": "prisma://accelerate.prisma-data.net/?api_key=..."
       }
     },
     "database": {
@@ -214,6 +195,8 @@ Creates a new named connection string for a database. Use for per-developer or p
   }
 }
 ```
+
+Extract: `data.endpoints.direct.connectionString` → use as `DATABASE_URL`.
 
 ## Delete database
 

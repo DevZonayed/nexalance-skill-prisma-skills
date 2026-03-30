@@ -81,8 +81,9 @@ The response is wrapped in `{ "data": { ... } }`. Extract:
 
 - `data.id` — the project ID (prefixed with `proj_`)
 - `data.database.id` — the database ID (prefixed with `db_`)
-- `data.database.connections[0].endpoints.direct.connectionString` — the direct connection string
-- `data.database.connections[0].endpoints.pooled.connectionString` — the pooled connection string (recommended for serverless)
+- `data.database.connections[0].endpoints.direct.connectionString` — the direct PostgreSQL connection string
+
+Use the **direct** connection string (`endpoints.direct.connectionString`). Do not use the pooled or accelerate endpoints — those are for legacy Accelerate setups and not needed for new projects.
 
 If the response status is `provisioning`, wait a few seconds and poll `GET /v1/databases/<database-id>` until `status` is `ready`.
 
@@ -99,35 +100,56 @@ curl -s -X POST https://api.prisma.io/v1/databases/<database-id>/connections \
   -d '{ "name": "dev" }'
 ```
 
-Extract connection strings from the response:
-
-- `data.endpoints.direct.connectionString` — for direct connections
-- `data.endpoints.pooled.connectionString` — for pooled/serverless connections
+Extract the direct connection string from `data.endpoints.direct.connectionString`.
 
 ### Step 5: Configure the local project
 
-1. Write the connection string to `.env`:
+1. Install dependencies if not already present:
+
+```bash
+npm install prisma @prisma/client dotenv
+```
+
+2. Write the direct connection string to `.env`:
 
 ```
-DATABASE_URL="<pooled-connection-string>"
-DIRECT_URL="<direct-connection-string>"
+DATABASE_URL="<direct-connection-string>"
 ```
 
-If `.env` already exists, upsert the `DATABASE_URL` and `DIRECT_URL` entries. Do not duplicate them.
+If `.env` already exists, upsert the `DATABASE_URL` entry. Do not duplicate it.
 
-2. Verify `.gitignore` includes `.env`. Warn the user if it does not.
+3. Verify `.gitignore` includes `.env`. Warn the user if it does not.
 
-3. If `prisma/schema.prisma` does not exist, run `npx prisma init --datasource-provider prismaPostgres` first.
+4. If `prisma/schema.prisma` does not exist, run `npx prisma init` to scaffold the project. This creates both `prisma/schema.prisma` and `prisma.config.ts`.
 
-4. Ensure `schema.prisma` has the correct datasource configuration:
+5. Ensure `schema.prisma` has the `postgresql` provider and **no** `url` or `directUrl` in the datasource block (Prisma 7 manages connection URLs in `prisma.config.ts`, not in the schema):
 
 ```prisma
 datasource db {
-  provider  = "prismaPostgres"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
 }
 ```
+
+6. Ensure `prisma.config.ts` loads the connection URL from the environment:
+
+```typescript
+import path from 'node:path'
+import { defineConfig } from 'prisma/config'
+import 'dotenv/config'
+
+export default defineConfig({
+  earlyAccess: true,
+  schema: path.join(import.meta.dirname, 'prisma', 'schema.prisma'),
+  datasource: {
+    url: process.env.DATABASE_URL!,
+  },
+})
+```
+
+**Important Prisma 7 notes:**
+- Connection URLs go in `prisma.config.ts`, never in `schema.prisma`
+- The provider in `schema.prisma` must be `"postgresql"` (not `"prismaPostgres"`)
+- `dotenv/config` must be imported in `prisma.config.ts` to load `.env` variables
 
 ### Step 6: Push schema and generate client
 
