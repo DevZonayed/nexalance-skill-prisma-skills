@@ -42,33 +42,26 @@ Follow these steps in order. Each step includes the API call to make and how to 
 
 ### Step 1: Authenticate
 
-Try these methods in order. Use the first one that works.
+You need a service token. Try these methods in order:
 
-**1a. Reuse Prisma CLI credentials (preferred)**
+**1a. Token in the user's prompt**
 
-If the user has previously logged in via `prisma init --db`, `prisma postgres link`, or any other Prisma CLI command that triggers browser auth, valid credentials are stored on disk. Check for a stored token:
+Check if the user included a service token in their initial message (e.g., "Set up Prisma Postgres with token eyJ..."). If so, use it **exactly as provided** — do not truncate, re-encode, or round-trip it through a file. Store it in a shell variable for subsequent calls.
 
-- **macOS:** `~/Library/Preferences/prisma-cli/auth.json`
-- **Linux:** `~/.config/prisma-cli/auth.json`
+**1b. Token in the environment**
 
-If the file exists, read the `token` field and try it against the API (`GET /v1/regions/postgres`). If it returns 401 (expired), refresh it using the `refreshToken` field. Store the refreshed token in a shell variable for subsequent calls.
+Check for `PRISMA_SERVICE_TOKEN` in the environment or `.env` file.
 
-Read `references/cli-auth.md` for the token file format and refresh flow.
+**1c. Ask the user to create one**
 
-**1b. Use an explicit service token**
-
-If no CLI credentials are found, check for `PRISMA_SERVICE_TOKEN` in the environment or `.env` file.
-
-If the user provides a token directly, use it **exactly as provided** — do not truncate, re-encode, or round-trip it through a file. Store it in a shell variable.
-
-**1c. Manual service token creation (fallback)**
-
-If neither 1a nor 1b yields a token, instruct the user:
+If no token is available, instruct the user:
 
 > Create a service token in Prisma Console → Workspace Settings → Service Tokens.
 > Copy the token and paste it here.
 
 Read `references/auth.md` for details on service token creation.
+
+Once you have a token, store it in a shell variable (`PRISMA_SERVICE_TOKEN`) and use it for all subsequent API calls.
 
 ### Step 2: List available regions
 
@@ -240,7 +233,7 @@ After verification succeeds, delete `test-connection.ts`.
 Then share links for the user to explore their database:
 
 - **Prisma Studio (CLI):** `npx prisma studio` — opens a visual data browser locally
-- **Console:** `https://console.prisma.io/<workspace-id>/projects/<project-id>` — direct link to the project (use the IDs from Step 3)
+- **Console:** `https://console.prisma.io/<workspaceId>/<projectId>/<databaseId>/dashboard` — strip the prefixes (`wksp_`, `proj_`, `db_`) from the IDs returned in Step 3 to build this URL
 
 Read `references/prisma7-client.md` for the full client instantiation reference.
 
@@ -260,8 +253,7 @@ Read `references/api-basics.md` for the full error reference. Key self-correctio
 Detailed API and usage information is in:
 
 ```
-references/cli-auth.md         — Reuse Prisma CLI OAuth credentials (preferred auth method)
-references/auth.md             — Service token creation and usage (fallback)
+references/auth.md             — Service token creation and usage
 references/api-basics.md       — Base URL, envelope, IDs, errors, pagination
 references/endpoints.md        — Endpoint details for projects, databases, connections, regions
 references/prisma7-client.md   — Prisma 7 client instantiation and usage patterns
