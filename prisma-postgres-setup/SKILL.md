@@ -168,29 +168,20 @@ export default defineConfig({
 - The provider in `schema.prisma` must be `"postgresql"` (not `"prismaPostgres"`)
 - `dotenv/config` must be imported in `prisma.config.ts` to load `.env` variables
 
-### Step 6: Push schema and generate client
+### Step 6: Define schema and push
 
-If the schema has models defined:
+If the schema already has models, skip to pushing. Otherwise, **present these options as an interactive menu**:
+
+1. **"I'll define my schema manually"** — Tell the user to edit `prisma/schema.prisma` and come back when ready. Wait for them before proceeding.
+2. **"Give me a starter schema"** — Add a Blog starter schema (User, Post, Comment with relations) to `prisma/schema.prisma`. Show the user what was added and ask if they want to adjust it before pushing.
+3. **"I'll describe what I need"** — Ask the user to describe their data model in natural language (e.g., "I'm building a task manager with projects, tasks, and team members"). Generate a schema from the description, show it, and ask for confirmation before pushing.
+
+Once the schema has models and the user is ready, push and generate:
 
 ```bash
 npx prisma db push
-```
-
-Or for a production-ready migration workflow:
-
-```bash
-npx prisma migrate dev --name init
-```
-
-Then generate the Prisma Client:
-
-```bash
 npx prisma generate
 ```
-
-If the schema has no models yet, tell the user:
-
-> Add models to `prisma/schema.prisma`, then run `npx prisma db push` to apply them.
 
 ### Step 7: Verify the connection
 
@@ -229,7 +220,12 @@ npx tsx test-connection.ts
 - Do **not** use `datasourceUrl` — that option does not exist in Prisma 7
 - Do **not** use `new PrismaClient()` with no arguments — it will throw
 
-After verification succeeds, you may delete `test-connection.ts` or keep it for reference.
+After verification succeeds, delete `test-connection.ts`.
+
+Then share links for the user to explore their database:
+
+- **Prisma Studio (CLI):** `npx prisma studio` — opens a visual data browser locally
+- **Console:** `https://console.prisma.io` — the project is visible in the workspace dashboard
 
 Read `references/prisma7-client.md` for the full client instantiation reference.
 
