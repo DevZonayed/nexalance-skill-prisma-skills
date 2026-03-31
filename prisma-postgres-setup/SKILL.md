@@ -184,12 +184,15 @@ If the schema already has models, skip to pushing. Otherwise, **present these op
 2. **"Give me a starter schema"** — Add a Blog starter schema (User, Post, Comment with relations) to `prisma/schema.prisma`. Show the user what was added and ask if they want to adjust it before pushing.
 3. **"I'll describe what I need"** — Ask the user to describe their data model in natural language (e.g., "I'm building a task manager with projects, tasks, and team members"). Generate a schema from the description, show it, and ask for confirmation before pushing.
 
-Once the schema has models and the user is ready, push and generate:
+Once the schema has models and the user is ready, create a migration and generate the client:
 
 ```bash
-npx prisma db push
-npx prisma generate
+npx prisma migrate dev --name init
 ```
+
+This creates migration files in `prisma/migrations/` **and** generates the client in one step. Migration history is essential for CI/CD workflows (`prisma migrate deploy`) and production deployments.
+
+Only use `npx prisma db push` if the user explicitly asks for prototyping-only mode (no migration history). In that case, follow it with `npx prisma generate`.
 
 ### Step 7: Verify the connection
 
